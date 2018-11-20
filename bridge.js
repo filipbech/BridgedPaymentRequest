@@ -2,20 +2,27 @@ import * as Comlink from "/node_modules/comlinkjs/comlink.js";
 
 // THIS FILE SHOULD INLINED ON BRIDGE.HTML (on PSP server)
 
-class MyPaymentRequest {
+const shippingAddressToObject = obj => {
+    const {
+        addressLine, city, country, dependentLocality, languageCode, organization, phone, postalCode, recipient, region, sortingCode
+    } = obj;
+    return {
+        addressLine, city, country, dependentLocality, languageCode, organization, phone, postalCode, recipient, region, sortingCode
+    };
+}
 
+class MyPaymentRequest {
     addEventListener(name, cb) {
-        //TODO: also handle the shippingoptionschange event
         this.instance.addEventListener(name, e => {
+            const shippingAddress = shippingAddressToObject(e.target.shippingAddress);
             e.updateWith(new Promise(res => {               
                 cb({
                     target: {
-                        //TODO: mock all of this out
-                        shippingAddress: {
-                            country: e.target.shippingAddress.country
-                        }
+                        shippingOption: e.target.shippingOption,
+                        id: e.target.id,
+                        shippingAddress
                     },
-                    type: 'shippingaddresschange',
+                    type: name,
                     updateWith: Comlink.proxyValue((data) => {
                         res(data);
                     })
@@ -27,11 +34,22 @@ class MyPaymentRequest {
     async show(fn) {
         const response = await this.instance.show();
 
-        let token = '';
+        const {
+            methodName,payerEmail,payerName,payerPhone,requestId,shippingOption
+        } = response;
+
+        const paymentResponse = {
+            methodName,payerEmail,payerName,payerPhone,requestId,shippingOption,
+            shippingAddress: shippingAddressToObject(response.shippingAddress),
+            details: {
+                token: '',
+                billingAddress: Object.assign({},response.details.billingAddress)
+            }
+        };
 
         await new Promise(res => {
             //this is to simulate the request to the auth-server
-            token = 'jhlkahdfjdsakfæsfjksdjflæ';
+            paymentResponse.details.token = 'jhlkahdfjdsakfæsfjksdjflæ';
             res();
         },500);
 
@@ -53,24 +71,16 @@ class MyPaymentRequest {
                 })
             }).then(res=> res.json())
             .then(res=> {
-                token = res.pull_url
+                paymentResponse.details.token = res.pull_url
             });
         */
 
-        fn({ 
-            //todo: mock all of this
-            details: {
-                token,
-                billingAddress: {
-                    country: response.details.billingAddress.country
-                }
-            },
-            payerName: response.payerName,
+        fn(Object.assign(paymentResponse,{             
             complete: Comlink.proxyValue(status => {
                 //this closes the payment-dialog UI with the appropriate animation
                 response.complete(status)
             })
-        });
+        }));
     }
 
     constructor(...options) {
