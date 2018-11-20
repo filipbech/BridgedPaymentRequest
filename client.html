@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <script type="module">
+        import { BridgedPaymentRequest } from './client.js';
+
+        const supportedInstruments = [
+            { supportedMethods: ['basic-card'] }
+        ];
+        const paymentDetails = {
+            total: {
+                label: 'Total',
+                amount: { currency: 'USD', value: 95 }
+            },
+            displayItems: [{
+                label: 'Subtotal',
+                amount: { currency: 'USD', value: 85 }
+            }, {
+                label: 'Tax',
+                amount: { currency: 'USD', value: 10 }
+            }],
+            shippingOptions: [{ id: 'free', selected: true, label: 'Free shipping (2-3 weeks)', amount: { currency: 'USD', value: 0 } }]
+
+        };
+        const options = { requestShipping: true, requestPayerName: true, requestPayerPhone: true, requestPayerEmail: true };
+
+        let paymentReq = new BridgedPaymentRequest(supportedInstruments, paymentDetails, options);
+
+        paymentReq.show().then(result => {
+            setTimeout(_ => {
+                result.complete('success');
+            }, 500);
+        });
+
+        paymentReq.addEventListener('shippingaddresschange', event => {
+            setTimeout(_ => {
+                event.updateWith(paymentDetails);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "paymentrequestbridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bridge.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "comlinkjs": "^3.0.3"
+  }
+}
