@@ -11,52 +11,71 @@
         import { BridgedPaymentRequest } from './client.js';
 
         const supportedInstruments = [
-            { supportedMethods: ['basic-card'] }
-        ];
-        const paymentDetails = {
-            total: {
-                label: 'Total',
-                amount: { currency: 'USD', value: 95 }
-            },
-            displayItems: [{
-                label: 'Subtotal',
-                amount: { currency: 'USD', value: 85 }
+                { supportedMethods: ['basic-card'] }
+            ];
+            const paymentDetails = {
+                total: {
+                    label: 'Total',
+                    amount: { currency: 'USD', value: 95 }
+                },
+                displayItems: [{
+                    label: 'Subtotal',
+                    amount: { currency: 'USD', value: 85 }
+                }, {
+                    label: 'Tax',
+                    amount: { currency: 'USD', value: 10 }
+                }],
+                shippingOptions: []
+            };
+            const options = { requestShipping: true, requestPayerName: true, requestPayerPhone: true, requestPayerEmail: true };
+            const shippingOptions = [{
+                id: 'free',
+                selected: true,
+                label: 'Free shipping (2-3 weeks)',
+                amount: { currency: 'USD', value: 0 }
             }, {
-                label: 'Tax',
-                amount: { currency: 'USD', value: 10 }
-            }],
-            shippingOptions: [{ id: 'free', selected: false, label: 'Free shipping (2-3 weeks)', amount: { currency: 'USD', value: 0 } }, { id: 'global', selected: false, label: 'Global express', amount: { currency: 'USD', value: 10 } }]
-
-        };
-        const options = { requestShipping: true, requestPayerName: true, requestPayerPhone: true, requestPayerEmail: true };
+                id: 'express',
+                selected: false,
+                label: 'Express shipping (24 hours)',
+                amount: { currency: 'USD', value: 8 }
+            }];
 
         let paymentReq = new BridgedPaymentRequest(supportedInstruments, paymentDetails, options);
 
         paymentReq.show().then(result => {
+            // success
+            console.log(result);
             setTimeout(_ => {
                 result.complete('success');
             }, 500);
         });
 
-        paymentReq.addEventListener('shippingaddresschange', event => {
+        paymentReq.addEventListener('shippingaddresschange', e => {
+            //read data from the event.target
+            if (e.target.shippingAddress) {
+                paymentDetails.shippingOptions = shippingOptions;
+            }
             setTimeout(_ => {
-                paymentDetails.shippingOptions[0].selected = true;
-                event.updateWith(paymentDetails);
-            }, 1000);
+                e.updateWith(paymentDetails);
+            }, 500);
         });
 
-        paymentReq.addEventListener('shippingoptionchange', event => {
+        paymentReq.addEventListener('shippingoptionchange', e => {
+            //read data from the instance
+            if (paymentReq.shippingOption === 'free') {
+                paymentDetails.total.amount.value = 95;
+            }
+            if (paymentReq.shippingOption === 'express') {
+                paymentDetails.total.amount.value = 103;
+            }
+            paymentDetails.shippingOptions = shippingOptions.map(item => {
+                item.selected = paymentReq.shippingOption === item.id;
+                return item;
+            });
+
             setTimeout(_ => {
-                if(paymentReq.shippingOption == 'global') {
-                    paymentDetails.shippingOption = 'global';
-                    paymentDetails.shippingOptions[1].selected = true;
-                    paymentDetails.total =  {
-                        label: 'Total',
-                        amount: { currency: 'USD', value: 105 }
-                    };
-                }
-                event.updateWith(paymentDetails);
-            }, 1000);
+                e.updateWith(paymentDetails);
+            }, 500);
         });
         
 

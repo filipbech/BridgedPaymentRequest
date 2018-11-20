@@ -27,6 +27,7 @@ export class BridgedPaymentRequest {
         while (!this.instance) {
             await new Promise(res => setTimeout(res, 100));
         }
+        
         this.instance.addEventListener(name, Comlink.proxyValue(event => {
             Object.assign(this, event.target);
             event.target = this;
