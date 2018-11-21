@@ -15,6 +15,7 @@ export const establishConnection = async () => {
     ifr.style.pointerEvents = 'none';
     ifr.style.zIndex = '-999';
     ifr.src = 'bridge.html'; //this should be PSP domain
+    ifr.allowPaymentRequest = true;
     document.body.appendChild(ifr);
     await new Promise(resolve => ifr.onload = resolve);
     _paymentRequest = await Comlink.proxy(ifr.contentWindow);
